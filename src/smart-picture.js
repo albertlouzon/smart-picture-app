@@ -55,7 +55,8 @@ export default class SmartPicture extends  React.Component {
     };
 
     const formData = new FormData();
-    formData.append('file', this.state.file, 'yo');
+    console.log(this.state.file)
+    formData.append('file', this.state.file, this.state.file['name']);
     this.setState({isLoading: true, loaderStroke: loaderColors.progress});
     axios.post("https://infer-73361.mindee.net/main/ocr_receipts/predict", formData, options)
         .then(res => {
@@ -112,8 +113,37 @@ export default class SmartPicture extends  React.Component {
       }
     }
     console.log('here is the formatted data : ', data);
-    this.setState({formatedData: data});
+    this.setState({formatedData: data}, () => {    this.extractCoordinates();
+    });
   }
+
+  extractCoordinates() {
+    console.log('start extractCoordinates. this.s.formatedData = ', this.state.formatedData);
+    const key = 'coord_x1';
+    const filteredCategories = []
+    console.log(this.state.formatedData)
+    this.state.formatedData.forEach((category) => {
+      console.log(category['coord_x1'])
+      if(typeof category['coord_x1'] === 'number') {
+        console.log('yes')
+        filteredCategories.push(category);
+      }
+    })
+    console.log('end on first round :L ', filteredCategories);
+    filteredCategories.forEach((cat) => {
+      this.drawCoordinates(cat);
+    })
+  }
+
+  drawCoordinates(category) {
+    const coord = {x1: 'coord_x1', x2: 'coord_x2', y1: 'coord_y1', y2: 'coord_y2' };
+    if(category[coord.x1] === 0 && category[coord.x2] === 0 && category[coord.y1] === 0 && category[coord.y2] === 0){
+      console.log('useless elmt: ', category);
+      return null;
+    }
+
+  }
+
 
   showAlertMsg(content, smiley, timer) {
     if(!this.state.isAlertActive) {
